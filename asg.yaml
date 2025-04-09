@@ -62,18 +62,15 @@ Resources:
                 sudo chmod go+rw .
                 cd /
 
-                # aws credentials
-                cd ~/.aws/
-                sudo rm -Rf credentials
-                cat > ~/.aws/credentials << 'EOF'
+                # Configure AWS CLI
+                ### REPLACE WITH YOUR AWS CREDENTIALS ###
+                AWS_ACCESS_KEY_ID="your-access-key-id" # REPLACE
+                AWS_SECRET_ACCESS_KEY="your-secret-access-key" # REPLACE
+                AWS_SESSION_TOKEN="your-session-token" # REPLACE
 
-                ### CHANGE THIS TO YOUR AWS CREDENTIALS ###
-                [default]
-                
-                # PASTE HERE YOUR AWS CREDENTIALS
-
-                EOF
-                cd /
+                aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+                aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY            
+                aws configure set aws_session_token $AWS_SESSION_TOKEN
 
                 # Join the swarm cluster
                 SWARMJOIN=$(cat swarm_join_command)
