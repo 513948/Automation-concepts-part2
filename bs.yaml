@@ -20,7 +20,7 @@ Resources:
       ImageId: ami-0bb4c991fa89d4b9b  # Amazon Linux
       KeyName: vockey
       SubnetId: 
-        Fn::ImportValue: AZStack:PublicSubnet1
+        Fn::ImportValue: AZStack:PrivateSubnet1
       SecurityGroupIds:
         - !Ref buildserversecuritygroup
       Tags:

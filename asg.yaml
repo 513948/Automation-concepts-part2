@@ -91,8 +91,6 @@ Resources:
                       sh -c "
                         sed -i 's/Server.*CatalogDb;/Server=${RDS_ENDPOINT},1433;User ID=${RDS_USERNAME};Password=${RDS_USERNAME};Initial Catalog=Microsoft.eShopOnWeb.CatalogDb;/' appsettings.json &&
                         sed -i 's/Server.*Identity;/Server=${RDS_ENDPOINT},1433;User ID=${RDS_USERNAME};Password=${RDS_USERNAME};Initial Catalog=Microsoft.eShopOnWeb.Identity;/' appsettings.json &&
-                        sed -i 's#https://localhost:5099/api/#http://$INSTANCE_PUBLIC_IP:5099/api/#g' appsettings.Development.json &&
-                        sed -i 's#https://localhost:44315/#http://$INSTANCE_PUBLIC_IP:80/#g' appsettings.Development.json &&
                         dotnet Web.dll
                       "
                   
@@ -104,17 +102,15 @@ Resources:
                       sh -c "
                         sed -i 's/Server.*CatalogDb;/Server=${RDS_ENDPOINT},1433;User ID=${RDS_USERNAME};Password=${RDS_USERNAME};Initial Catalog=Microsoft.eShopOnWeb.CatalogDb;/' appsettings.json &&
                         sed -i 's/Server.*Identity;/Server=${RDS_ENDPOINT},1433;User ID=${RDS_USERNAME};Password=${RDS_USERNAME};Initial Catalog=Microsoft.eShopOnWeb.Identity;/' appsettings.json &&
-                        sed -i 's#https://localhost:5099/api/#http://$INSTANCE_PUBLIC_IP:5099/api/#g' appsettings.Development.json &&
-                        sed -i 's#https://localhost:5001/#http://$INSTANCE_PUBLIC_IP:80/#g' appsettings.Development.json &&
                         dotnet PublicApi.dll
                       "
-                     
                 EOF
 
                 # Log in to ECR
                 aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin ${ECR_URI}
 
                 # Run the docker-compose 
+                cd /home/ec2-user
                 sudo docker-compose up >> /EFS/$INSTANCE_PUBLIC_IP.docker.log 2>&1 &
               - RDS_ENDPOINT: 
                   Fn::ImportValue: DatabaseStack:RDSEndpoint
