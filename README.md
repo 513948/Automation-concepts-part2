@@ -62,10 +62,10 @@ to add the cloudshirt data-view to monitor it.
 ## Requirements
 The solution is designed to meet the following requirements:
 
-- [x] **REQ-01**: The CloudShirt .NET solution is highly available across multiple AZs using a single URL.
-- [x] **REQ-02**: The CloudShirt .NET solution can scale out during spike traffic hours between 6 PM and 8 PM Eastern Time.
-- [x] **REQ-03**: Elastic File System (EFS) is used to store public webserver log files on a daily basis.
-- [x] **REQ-04**: The data tier of the CloudShirt .NET solution is based on Amazon RDS.
-- [x] **REQ-05**: Elastic (ELK) Stack v8.x is provisioned as a monitoring solution.
-- [x] **REQ-06**: Logs are made visible on the Elastic Stack using FileBeat.
-- [ ] **REQ-07**: RDS exports the order table to an S3 bucket using an AWS CLI script and the `bcp` utility, enabling external Athena partners to analyze it.
+- [x] **REQ-08**: The CloudShirt .NET solution should be dockerized (using resource 1).
+- [x] **REQ-09**: The CloudShirt .NET solution should be build from a separate AWS EC2 instance in the private subnet, called Buildserver.
+- [x] **REQ-10**: Docker-compose is used to define and run the services to be deployed to the instances in the ASG.
+- [x] **REQ-11**: The CloudShirt .NET Docker images should be build on the Buildserver during nightly builds.
+- [x] **REQ-12**: The CloudShirt .NET Docker images are pushed to an AWS ECR or Docker.io private repository during the nightly builds.
+- [x] **REQ-13**: The Buildserver is configured as master in a Docker cluster.
+- [x] **REQ-07**: The instances in the ASG are configured as workers in a Docker cluster.
