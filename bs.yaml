@@ -1,0 +1,125 @@
+Description: "stack for the build server"
+
+Resources:
+  buildserversecuritygroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: security group for build server
+      VpcId: !ImportValue AZStack:VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 2377
+          ToPort: 2377
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      
+  # EC2 Instance 
+  Buildserver:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.large
+      ImageId: ami-0bb4c991fa89d4b9b  # Amazon Linux
+      KeyName: vockey
+      SubnetId: 
+        Fn::ImportValue: AZStack:PublicSubnet1
+      SecurityGroupIds:
+        - !Ref buildserversecuritygroup
+      Tags:
+        - Key: Name
+          Value: buildServer
+      UserData:
+        Fn::Base64:
+          Fn::Sub:
+            - |
+              #!/bin/bash
+
+              # Buildserver setup script
+              # This script installs and configures the buildserver
+              # Install docker
+              sudo yum install -y docker
+              sudo systemctl start docker
+              sudo systemctl enable docker
+
+              # Install git
+              sudo yum install git -y
+              sudo git clone https://github.com/looking4ward/CloudShirt.git
+
+              # Mount EFS
+              yum -y install nfs-utils
+              mkdir /EFS
+              mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${EFS_DNS}.efs.us-east-1.amazonaws.com:/ /EFS # example EFS DNS
+              cd /EFS
+              sudo chmod go+rw .
+              cd /
+
+              # aws credentials
+              cd ~/.aws/
+              sudo rm -Rf credentials
+              cat > ~/.aws/credentials << 'EOF'
+
+              ### CHANGE THIS TO YOUR AWS CREDENTIALS ###
+              [default]
+              aws_access_key_id=ASIAVLVB52TJMKRXD66C
+              aws_secret_access_key=aT7iMqj8Mg2Vadhq/gl1RnGMCVHrDiBL9dtXrYMW
+              aws_session_token=IQoJb3JpZ2luX2VjEBMaCXVzLXdlc3QtMiJGMEQCIHldwPxzRLf1QtuW14jJUAF0bft2Z3euocEMV6kkW/XnAiBG7w5VuI/H/e+bwr2ZMRyHY0k/qASYlCRFuq1BY21uLSq7AgiM//////////8BEAEaDDM2ODYzMzA0MjEzMCIMAQeekP2Iebm90XzWKo8CXlH0lOsX/4ez/V1+jbU0Njzubr7zlr2Tc/M+7CE3tmSvbRUEw5Xr4XgOP2a3t076bkce4SBNPeNG4Cc9n8CLbc52Y0DvnH5CAJmNcFOoyXuCtQxdaVY02Qt0Pq176qgK0EvZ81oumWDEp6Hho9gKAB13Ve/rMXVWUUH72nsPBZcGhk7HlbLFUMKuHkdVry2bzLvLhsu9p5JF4YBlsW+DXY8dOw8zChryYjpFP4seNNtImxMAFepriW+ooPBGLIt3J7YkHifjl1q/394h6Capkf9lY3aB6uCvL9ENNABXC8bKip8BNIvIUGTwEqg0hV8qwgVURPETt6wREBwzppOmVoSF5Q9lAsP2GkDJltxxgTDZrNm/BjqeAZ7qzeJFkScrDymqiG8FEWP+at08G3s4/ifb8VdA14dBJv6tOR7z5NZcZ+uk9YQUDnzS5XCwH5f4cxGwpxyVnkfjZxt98KuJ2gN4F4Z2b1/bZIFpVO8ep3Ag83TY4hYuhm6blbFrPD3lCFbqWW+3oamjPBObhvkioBLeZEjinZzHF80LAekT72P4MA/7qcGEC9YQ90ooqpxHauQN5jOD
+
+              EOF
+              cd /
+
+              # Make nightbuild script
+              cat > /home/ec2-user/nightbuild.sh << 'EOF'
+              #!/bin/bash
+
+              # Get the latest code from the repository
+              cd /
+              sudo rm -Rf CloudShirt
+              sudo git clone https://github.com/looking4ward/CloudShirt.git
+
+              # Log in to ECR
+              aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 368633042130.dkr.ecr.us-east-1.amaz$
+
+              # Build the web docker image
+              cd /CloudShirt
+              sudo docker build -t cloudshirtwebapp:latest -f src/Web/Dockerfile .
+              sudo docker tag cloudshirtwebapp:latest 368633042130.dkr.ecr.us-east-1.amazonaws.com/cloudshirt-image-repo:web-latest
+              sudo docker push 368633042130.dkr.ecr.us-east-1.amazonaws.com/cloudshirt-image-repo:web-latest
+              
+              # Build the api docker image
+              cd /CloudShirt
+              sudo docker build -t cloudshirtapiapp:latest -f src/PublicApi/Dockerfile .
+              sudo docker tag cloudshirtapiapp:latest 368633042130.dkr.ecr.us-east-1.amazonaws.com/cloudshirt-image-repo:api-latest
+              sudo docker push 368633042130.dkr.ecr.us-east-1.amazonaws.com/cloudshirt-image-repo:api-latest
+              EOF
+
+              # Make script executable
+              chmod +x /home/ec2-user/nightbuild.sh
+
+              # Set Script in a cron job, time is 4 AM
+              echo "0 4 * * * ec2-user /home/ec2-user/nightbuild.sh > /home/ec2-user/export-log.txt 2>&1" >> /etc/crontab
+
+              # Docker Swarm setup
+              sudo docker swarm init
+              sudo docker swarm join-token worker | awk '/docker swarm join/{print}' > ~/swarm_join_command
+              sudo cp ~/swarm_join_command /EFS
+
+              # Log in to ECR
+              aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ECR_URI}
+
+              # Build the web docker image
+              cd /CloudShirt
+              sudo docker build -t cloudshirtwebapp:latest -f src/Web/Dockerfile .
+              sudo docker tag cloudshirtwebapp:latest ${ECR_URI}:web-latest
+              sudo docker push ${ECR_URI}:web-latest
+
+              # Build the api docker image
+              cd /CloudShirt
+              sudo docker build -t cloudshirtapiapp:latest -f src/PublicApi/Dockerfile ..
+              sudo docker tag cloudshirtapiapp:latest ${ECR_URI}:api-latest
+              sudo docker push ${ECR_URI}:api-latest
+            - EFS_DNS:
+                Fn::ImportValue: EFSStack:EFSdns
+              ECR_URI:
+                Fn::ImportValue: ECRStack:RepoUri

@@ -33,19 +33,31 @@ aws cloudformation create-stack --stack-name "EFSStack" --template-body file://e
 aws cloudformation wait stack-create-complete --stack-name "EFSStack" --region "$REGION"
 echo "EFSStack deployment is complete!"
 
-# Deploy Stack 5: ASGStack
+# Deploy Stack 5: ECRstack
+echo "Creating stack: ECRStack"
+aws cloudformation create-stack --stack-name "ECRStack" --template-body file://ecr.yml --region "$REGION" --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation wait stack-create-complete --stack-name "ECRStack" --region "$REGION"
+echo "ECRStack deployment is complete!"
+
+# Deploy Stack 6: BSStack
+echo "Creating stack: BSStack"
+aws cloudformation create-stack --stack-name "BSStack" --template-body file://bs.yaml --region "$REGION" --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation wait stack-create-complete --stack-name "BSStack" --region "$REGION"
+echo "BSStack deployment is complete!"
+
+# Deploy Stack 7: ASGStack
 echo "Creating stack: ASGStack"
 aws cloudformation create-stack --stack-name "ASGStack" --template-body file://asg.yaml --region "$REGION"
 aws cloudformation wait stack-create-complete --stack-name "ASGStack" --region "$REGION"
 echo "ASGStack deployment is complete!"
 
-# Deploy Stack 6: ELKStack
+# Deploy Stack 8: ELKStack
 echo "Creating stack: ELKStack"
 aws cloudformation create-stack --stack-name "ELKStack" --template-body file://elk.yaml --region "$REGION"
 aws cloudformation wait stack-create-complete --stack-name "ELKStack" --region "$REGION"
 echo "ELKStack deployment is complete!"
 
-# Deploy Stack 7: S3 export stack
+# Deploy Stack 9: S3 export stack
 echo "Creating stack: EXPStack"
 aws cloudformation create-stack --stack-name "EXPStack" --template-body file://exp.yaml --region "$REGION" --capabilities CAPABILITY_NAMED_IAM
 aws cloudformation wait stack-create-complete --stack-name "EXPStack" --region "$REGION"

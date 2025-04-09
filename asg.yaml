@@ -4,7 +4,7 @@ Resources:
   ASGSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Enable HTTP and SSH access
+      GroupDescription: security group for asg group
       VpcId: !ImportValue AZStack:VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -43,10 +43,18 @@ Resources:
                 # CloudShirt Application Setup Script
                 # This script installs and configures everything needed to run the CloudShirt application
                 # with an external SQL Server, RDS database and EFS file system
+                # Install docker
+                sudo yum install -y docker
+                sudo systemctl start docker
+                sudo systemctl enable docker
+                sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+                sudo chmod +x /usr/local/bin/docker-compose
 
-                # Install dotnet-sdk-6.0
-                sudo yum update -y
+                # Install git
+                sudo yum install git -y
+                sudo git clone https://github.com/looking4ward/CloudShirt.git
 
+                # Mount EFS
                 yum -y install nfs-utils
                 mkdir /EFS
                 mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${EFS_DNS}.efs.us-east-1.amazonaws.com:/ /EFS # example EFS DNS
@@ -54,30 +62,53 @@ Resources:
                 sudo chmod go+rw .
                 cd /
 
-                sudo yum install -y dotnet-sdk-6.0 git
-                export DOTNET_CLI_HOME=/root/.dotnet
+                # aws credentials
+                cd ~/.aws/
+                sudo rm -Rf credentials
+                cat > ~/.aws/credentials << 'EOF'
 
-                # Install git
-                sudo yum install git -y
-                sudo git clone https://github.com/looking4ward/CloudShirt.git
+                ### CHANGE THIS TO YOUR AWS CREDENTIALS ###
+                [default]
+                aws_access_key_id=ASIAVLVB52TJMKRXD66C
+                aws_secret_access_key=aT7iMqj8Mg2Vadhq/gl1RnGMCVHrDiBL9dtXrYMW
+                aws_session_token=IQoJb3JpZ2luX2VjEBMaCXVzLXdlc3QtMiJGMEQCIHldwPxzRLf1QtuW14jJUAF0bft2Z3euocEMV6kkW/XnAiBG7w5VuI/H/e+bwr2ZMRyHY0k/qASYlCRFuq1BY21uLSq7AgiM//////////8BEAEaDDM2ODYzMzA0MjEzMCIMAQeekP2Iebm90XzWKo8CXlH0lOsX/4ez/V1+jbU0Njzubr7zlr2Tc/M+7CE3tmSvbRUEw5Xr4XgOP2a3t076bkce4SBNPeNG4Cc9n8CLbc52Y0DvnH5CAJmNcFOoyXuCtQxdaVY02Qt0Pq176qgK0EvZ81oumWDEp6Hho9gKAB13Ve/rMXVWUUH72nsPBZcGhk7HlbLFUMKuHkdVry2bzLvLhsu9p5JF4YBlsW+DXY8dOw8zChryYjpFP4seNNtImxMAFepriW+ooPBGLIt3J7YkHifjl1q/394h6Capkf9lY3aB6uCvL9ENNABXC8bKip8BNIvIUGTwEqg0hV8qwgVURPETt6wREBwzppOmVoSF5Q9lAsP2GkDJltxxgTDZrNm/BjqeAZ7qzeJFkScrDymqiG8FEWP+at08G3s4/ifb8VdA14dBJv6tOR7z5NZcZ+uk9YQUDnzS5XCwH5f4cxGwpxyVnkfjZxt98KuJ2gN4F4Z2b1/bZIFpVO8ep3Ag83TY4hYuhm6blbFrPD3lCFbqWW+3oamjPBObhvkioBLeZEjinZzHF80LAekT72P4MA/7qcGEC9YQ90ooqpxHauQN5jOD
 
-                # Update appsettings.json using defined variables
-                sudo sed -i "s/Server.*CatalogDb;/Server=${RDS_ENDPOINT},1433;User ID=${RDS_USERNAME};Password=${RDS_PASSWORD};Initial Catalog=Microsoft.eShopOnWeb.CatalogDb;/" CloudShirt/src/Web/appsettings.json
-                sudo sed -i "s/Server.*Identity;/Server=${RDS_ENDPOINT},1433;User ID=${RDS_USERNAME};Password=${RDS_PASSWORD};Initial Catalog=Microsoft.eShopOnWeb.Identity;/" CloudShirt/src/Web/appsettings.json
-                sudo sed -i "s/Server.*CatalogDb;/Server=${RDS_ENDPOINT},1433;User ID=${RDS_USERNAME};Password=${RDS_PASSWORD};Initial Catalog=Microsoft.eShopOnWeb.CatalogDb;/" CloudShirt/src/PublicApi/appsettings.json
-                sudo sed -i "s/Server.*Identity;/Server=${RDS_ENDPOINT},1433;User ID=${RDS_USERNAME};Password=${RDS_PASSWORD};Initial Catalog=Microsoft.eShopOnWeb.Identity;/" CloudShirt/src/PublicApi/appsettings.json
-
-                INSTANCE_PUBLIC_IP=$(wget -qO- http://checkip.amazonaws.com)
-                # run the application in folder Web port 80
-                cd CloudShirt/src/Web
-                sudo dotnet build
-                sudo dotnet run --urls "http://0.0.0.0:80/" >> /EFS/$INSTANCE_PUBLIC_IP.web.log 2>&1 &
+                EOF
                 cd /
 
-                # Run the application in folder PublicApi port 5009
-                cd CloudShirt/src/PublicApi
-                sudo dotnet build
-                sudo dotnet run --urls "http://0.0.0.0:5099/"
+                # Join the swarm cluster
+                SWARMJOIN=$(cat swarm_join_command)
+                sudo $(echo "$SWARMJOIN")
+
+                # Docker compose file
+                cat > /home/ec2-user/docker-compose.yml << 'EOF'
+                version: "3.8"
+                services:
+                  web:
+                    image: ${}:latest
+                    ports:
+                      - "80:80"
+                    command:
+                      sudo sed -i "s/Server.*CatalogDb;/Server=${RDS_ENDPOINT},1433;User ID=${RDS_USERNAME};Password=${RDS_PASSWORD};Initial Catalog=Microsoft.eShopOnWeb.CatalogDb;/" CloudShirt/src/Web/appsettings.json
+                      sudo sed -i "s/Server.*Identity;/Server=${RDS_ENDPOINT},1433;User ID=${RDS_USERNAME};Password=${RDS_PASSWORD};Initial Catalog=Microsoft.eShopOnWeb.Identity;/" CloudShirt/src/Web/appsettings.json
+                  publicapi:
+                    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/cloudshirt-image-repo:latest
+                    ports:
+                      - "5099:80"
+                    command:
+                      sudo sed -i "s/Server.*CatalogDb;/Server=${RDS_ENDPOINT},1433;User ID=${RDS_USERNAME};Password=${RDS_PASSWORD};Initial Catalog=Microsoft.eShopOnWeb.CatalogDb;/" CloudShirt/src/PublicApi/appsettings.json
+                      sudo sed -i "s/Server.*Identity;/Server=${RDS_ENDPOINT},1433;User ID=${RDS_USERNAME};Password=${RDS_PASSWORD};Initial Catalog=Microsoft.eShopOnWeb.Identity;/" CloudShirt/src/PublicApi/appsettings.json
+                EOF
+
+                # Log in to ECR
+                AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+                aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ECR_URI}
+
+                # Get the public ip of the ec2-instance
+                INSTANCE_PUBLIC_IP=$(wget -qO- http://checkip.amazonaws.com)
+
+                # Run the docker-compose 
+                sudo docker-compose up >> /EFS/$INSTANCE_PUBLIC_IP.docker.log 2>&1 &
               - RDS_ENDPOINT: 
                   Fn::ImportValue: DatabaseStack:RDSEndpoint
                 RDS_USERNAME:
@@ -86,6 +117,8 @@ Resources:
                   Fn::ImportValue: DatabaseStack:DBPassword
                 EFS_DNS:
                   Fn::ImportValue: EFSStack:EFSdns
+                ECR_URI:
+                  Fn::ImportValue: ECRStack:RepoUri
                 
         SecurityGroupIds:
           - !Ref ASGSecurityGroup
