@@ -78,19 +78,19 @@ Resources:
               sudo git clone https://github.com/looking4ward/CloudShirt.git
 
               # Log in to ECR
-              aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 368633042130.dkr.ecr.us-east-1.amaz$
+              aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin ${ECR_URI}
 
               # Build the web docker image
               cd /CloudShirt
               sudo docker build -t cloudshirtwebapp:latest -f src/Web/Dockerfile .
-              sudo docker tag cloudshirtwebapp:latest 368633042130.dkr.ecr.us-east-1.amazonaws.com/cloudshirt-image-repo:web-latest
-              sudo docker push 368633042130.dkr.ecr.us-east-1.amazonaws.com/cloudshirt-image-repo:web-latest
+              sudo docker tag cloudshirtwebapp:latest ${ECR_URI}web-latest
+              sudo docker push ${ECR_URI}web-latest
               
               # Build the api docker image
               cd /CloudShirt
               sudo docker build -t cloudshirtapiapp:latest -f src/PublicApi/Dockerfile .
-              sudo docker tag cloudshirtapiapp:latest 368633042130.dkr.ecr.us-east-1.amazonaws.com/cloudshirt-image-repo:api-latest
-              sudo docker push 368633042130.dkr.ecr.us-east-1.amazonaws.com/cloudshirt-image-repo:api-latest
+              sudo docker tag cloudshirtapiapp:latest ${ECR_URI}api-latest
+              sudo docker push ${ECR_URI}api-latest
               EOF
 
               # Make script executable
@@ -105,7 +105,7 @@ Resources:
               sudo cp ~/swarm_join_command /EFS
 
               # Log in to ECR
-              aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ECR_URI}
+              aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin ${ECR_URI}
 
               # Build the web docker image
               cd /CloudShirt

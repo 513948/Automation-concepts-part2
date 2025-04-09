@@ -100,8 +100,7 @@ Resources:
                 EOF
 
                 # Log in to ECR
-                AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-                aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ECR_URI}
+                aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin ${ECR_URI}
 
                 # Get the public ip of the ec2-instance
                 INSTANCE_PUBLIC_IP=$(wget -qO- http://checkip.amazonaws.com)
