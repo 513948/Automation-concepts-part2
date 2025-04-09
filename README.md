@@ -42,6 +42,11 @@ The following components are included in the solution:
 The Setup.sh script can be used to easily deploy the envirement through AWS CLI, for this AWS CLI needs to be installed and 
 a token needs to be configured in the /user/"username"/.aws/credentials file. 
 At the top of the script are two variables for the database username and password.
+
+> [!IMPORTANT] 
+> Before executing make sure you paste your own aws credentials in the paramaters in the files: asg.yaml and bs.yaml.
+> ![aws_cred]()
+
 > [!IMPORTANT] 
 > Ensure when creating the **DatabaseStack** that the masterpassword has
 > more than 8 vars in the string, otherwise the stack will fail.

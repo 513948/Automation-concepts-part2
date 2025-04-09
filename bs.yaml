@@ -8,10 +8,6 @@ Resources:
       VpcId: !ImportValue AZStack:VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 2377
-          ToPort: 2377
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
@@ -57,10 +53,10 @@ Resources:
 
               # Configure AWS CLI
               ### REPLACE WITH YOUR AWS CREDENTIALS ###
-              AWS_ACCESS_KEY_ID=ASIAVLVB52TJMKRXD66C # REPLACE
-              AWS_SECRET_ACCESS_KEY=aT7iMqj8Mg2Vadhq/gl1RnGMCVHrDiBL9dtXrYMW # REPLACE
-              AWS_SESSION_TOKEN=IQoJb3JpZ2luX2VjEBMaCXVzLXdlc3QtMiJGMEQCIHldwPxzRLf1QtuW14jJUAF0bft2Z3euocEMV6kkW/XnAiBG7w5VuI/H/e+bwr2ZMRyHY0k/qASYlCRFuq1BY21uLSq7AgiM//////////8BEAEaDDM2ODYzMzA0MjEzMCIMAQeekP2Iebm90XzWKo8CXlH0lOsX/4ez/V1+jbU0Njzubr7zlr2Tc/M+7CE3tmSvbRUEw5Xr4XgOP2a3t076bkce4SBNPeNG4Cc9n8CLbc52Y0DvnH5CAJmNcFOoyXuCtQxdaVY02Qt0Pq176qgK0EvZ81oumWDEp6Hho9gKAB13Ve/rMXVWUUH72nsPBZcGhk7HlbLFUMKuHkdVry2bzLvLhsu9p5JF4YBlsW+DXY8dOw8zChryYjpFP4seNNtImxMAFepriW+ooPBGLIt3J7YkHifjl1q/394h6Capkf9lY3aB6uCvL9ENNABXC8bKip8BNIvIUGTwEqg0hV8qwgVURPETt6wREBwzppOmVoSF5Q9lAsP2GkDJltxxgTDZrNm/BjqeAZ7qzeJFkScrDymqiG8FEWP+at08G3s4/ifb8VdA14dBJv6tOR7z5NZcZ+uk9YQUDnzS5XCwH5f4cxGwpxyVnkfjZxt98KuJ2gN4F4Z2b1/bZIFpVO8ep3Ag83TY4hYuhm6blbFrPD3lCFbqWW+3oamjPBObhvkioBLeZEjinZzHF80LAekT72P4MA/7qcGEC9YQ90ooqpxHauQN5jOD # REPLACE
-
+              AWS_ACCESS_KEY_ID=ASIAVLVB52TJND2ZYSLR # REPLACE
+              AWS_SECRET_ACCESS_KEY=B9u6fXKJbNtDg1TGTU/N/RuZWmLm17lL+8/F7jn6 # REPLACE
+              AWS_SESSION_TOKEN=IQoJb3JpZ2luX2VjEBsaCXVzLXdlc3QtMiJIMEYCIQDaHKaPymGOFRHshC/uXOD1ebqbTiZXNR/CnuWWshVBvgIhANQDhiTprEdbCoBaGHyxJR/9AgRAP0GUPLsns1qotLGnKrsCCJT//////////wEQARoMMzY4NjMzMDQyMTMwIgxxa7A4Hrh0m2nrViUqjwLq7NzJ9JbOjlmrDibr/CIJxXRuTrLMuiCpWEmTGLf39Lq8UxSJFlkVtSTtBRvI+Z7B+lLCxGYPMbyG5NOXCf4pvXXxyM6kOW2eTMv+jpDXgC6Jbrzu77IVc6JsF0LLqxfVwZ5AKp2yR4puEQJGnmCSLhCcqkPRhY/WJ1VxzJLM7xxyWlcxCicQ2r310kxs3w1rTCfbbAi5MNE3j3Ph41MLZBr917msn0yQz6dR8phnUjSLOERYS4DjXGK7Y0ojBcGqPoGXJXohJeR/s+OMoC99XluID/vlD3TxFrOgFIUfRrPnIjAfGb1kPgTztmkCtVJ7bK32wHQhF/KrImlWAumm7R6WmhaqnsMNCvvrwzKzMIiB278GOpwBDDCEfk8ncbG9lIV36iRdnzpyysIYv9GVjFB/JA2FjZH0+AHit+RxS2LXlJFZ+j2hLqEqXZvuOG7JyOqpZesJ82G4X2PL6EkBF1h5MBB8itLWr9Lod9bwYtGJ9DdcI5U7I3S5MApQiv56L2Wb72mJBv70c8XqfYwzb1AeYyXVw3ACFC7UF4ES9elMpSBXTdnmyDcQeQlXFJ3OXJwJ
+              
               aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
               aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY            
               aws configure set aws_session_token $AWS_SESSION_TOKEN
@@ -80,41 +76,30 @@ Resources:
               # Build the web docker image
               cd /CloudShirt
               sudo docker build -t cloudshirtwebapp:latest -f src/Web/Dockerfile .
-              sudo docker tag cloudshirtwebapp:latest ${ECR_URI}web-latest
-              sudo docker push ${ECR_URI}web-latest
-              
-              # Build the api docker image
-              cd /CloudShirt
-              sudo docker build -t cloudshirtapiapp:latest -f src/PublicApi/Dockerfile .
-              sudo docker tag cloudshirtapiapp:latest ${ECR_URI}api-latest
-              sudo docker push ${ECR_URI}api-latest
-              EOF
-
-              # Make script executable
-              chmod +x /home/ec2-user/nightbuild.sh
-
-              # Set Script in a cron job, time is 4 AM
-              echo "0 4 * * * ec2-user /home/ec2-user/nightbuild.sh > /home/ec2-user/export-log.txt 2>&1" >> /etc/crontab
-
-              # Docker Swarm setup
-              sudo docker swarm init
-              sudo docker swarm join-token worker | awk '/docker swarm join/{print}' > ~/swarm_join_command
-              sudo cp ~/swarm_join_command /EFS
-
-              # Log in to ECR
-              aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin ${ECR_URI}
-
-              # Build the web docker image
-              cd /CloudShirt
-              sudo docker build -t cloudshirtwebapp:latest -f src/Web/Dockerfile .
               sudo docker tag cloudshirtwebapp:latest ${ECR_URI}:web-latest
               sudo docker push ${ECR_URI}:web-latest
 
               # Build the api docker image
               cd /CloudShirt
-              sudo docker build -t cloudshirtapiapp:latest -f src/PublicApi/Dockerfile ..
+              sudo docker build -t cloudshirtapiapp:latest -f src/PublicApi/Dockerfile .
               sudo docker tag cloudshirtapiapp:latest ${ECR_URI}:api-latest
               sudo docker push ${ECR_URI}:api-latest
+              EOF
+
+              # Make script executable
+              chmod +x /home/ec2-user/nightbuild.sh
+
+              # Set Script in a cron job, time is 4 AM when executed
+              echo "0 4 * * * ec2-user /home/ec2-user/nightbuild.sh > /home/ec2-user/export-log.txt 2>&1" >> /etc/crontab
+
+              # Docker Swarm setup
+              cd /home/ec2-user
+              sudo docker swarm init
+              sudo docker swarm join-token worker | awk '/docker swarm join/{print}' > ~/swarm_join_command
+              sudo cp ~/swarm_join_command /EFS
+
+              # Run the nightbuild script once to build the images
+              sudo bash /home/ec2-user/nightbuild.sh > /home/ec2-user/initial-build.log 2>&1
             - EFS_DNS:
                 Fn::ImportValue: EFSStack:EFSdns
               ECR_URI:
