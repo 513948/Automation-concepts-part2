@@ -45,7 +45,7 @@ At the top of the script are two variables for the database username and passwor
 
 > [!IMPORTANT] 
 > Before executing make sure you paste your own aws credentials in the paramaters in the files: asg.yaml and bs.yaml.
-> ![aws_cred]()
+> ![aws_cred](https://github.com/513948/Automation-concepts-part2/blob/main/images/aws_cred.png)
 
 > [!IMPORTANT] 
 > Ensure when creating the **DatabaseStack** that the masterpassword has
