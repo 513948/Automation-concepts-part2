@@ -69,9 +69,8 @@ Resources:
 
                 ### CHANGE THIS TO YOUR AWS CREDENTIALS ###
                 [default]
-                aws_access_key_id=ASIAVLVB52TJMKRXD66C
-                aws_secret_access_key=aT7iMqj8Mg2Vadhq/gl1RnGMCVHrDiBL9dtXrYMW
-                aws_session_token=IQoJb3JpZ2luX2VjEBMaCXVzLXdlc3QtMiJGMEQCIHldwPxzRLf1QtuW14jJUAF0bft2Z3euocEMV6kkW/XnAiBG7w5VuI/H/e+bwr2ZMRyHY0k/qASYlCRFuq1BY21uLSq7AgiM//////////8BEAEaDDM2ODYzMzA0MjEzMCIMAQeekP2Iebm90XzWKo8CXlH0lOsX/4ez/V1+jbU0Njzubr7zlr2Tc/M+7CE3tmSvbRUEw5Xr4XgOP2a3t076bkce4SBNPeNG4Cc9n8CLbc52Y0DvnH5CAJmNcFOoyXuCtQxdaVY02Qt0Pq176qgK0EvZ81oumWDEp6Hho9gKAB13Ve/rMXVWUUH72nsPBZcGhk7HlbLFUMKuHkdVry2bzLvLhsu9p5JF4YBlsW+DXY8dOw8zChryYjpFP4seNNtImxMAFepriW+ooPBGLIt3J7YkHifjl1q/394h6Capkf9lY3aB6uCvL9ENNABXC8bKip8BNIvIUGTwEqg0hV8qwgVURPETt6wREBwzppOmVoSF5Q9lAsP2GkDJltxxgTDZrNm/BjqeAZ7qzeJFkScrDymqiG8FEWP+at08G3s4/ifb8VdA14dBJv6tOR7z5NZcZ+uk9YQUDnzS5XCwH5f4cxGwpxyVnkfjZxt98KuJ2gN4F4Z2b1/bZIFpVO8ep3Ag83TY4hYuhm6blbFrPD3lCFbqWW+3oamjPBObhvkioBLeZEjinZzHF80LAekT72P4MA/7qcGEC9YQ90ooqpxHauQN5jOD
+                
+                # PASTE HERE YOUR AWS CREDENTIALS
 
                 EOF
                 cd /
